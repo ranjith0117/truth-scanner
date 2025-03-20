@@ -1,4 +1,3 @@
-
 export interface ScanResult {
   authenticity: number;
   status: 'Secure' | 'Suspicious' | 'Forged';
@@ -109,19 +108,20 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
       y: Math.random() * 70 + 10,
       width: Math.random() * 15 + 5,
       height: Math.random() * 15 + 5,
-      type: 'Edited', // Always include at least one "Edited" area
+      type: 'Edited' as const, // Always include at least one "Edited" area
       confidence: Math.random() * 5 + 95 // Very high confidence (95-100%)
     }
   ] : undefined;
   
   // Add additional manipulation areas for heavily forged documents
   if (isForged && Math.random() > 0.3) { // Increased probability of additional manipulation areas
+    const randomType = manipulationTypes[Math.floor(Math.random() * manipulationTypes.length)];
     manipulationAreas?.push({
       x: Math.random() * 70 + 10,
       y: Math.random() * 70 + 10,
       width: Math.random() * 20 + 10,
       height: Math.random() * 20 + 10,
-      type: manipulationTypes[Math.floor(Math.random() * manipulationTypes.length)],
+      type: randomType, // Fixed: Explicitly use a typed value from the array
       confidence: Math.random() * 10 + 90
     });
   }
@@ -151,4 +151,3 @@ export const simulateScan = (file: File): Promise<ScanResult> => {
     }, 3000);
   });
 };
-
