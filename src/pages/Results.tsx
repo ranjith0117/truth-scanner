@@ -99,6 +99,15 @@ const Results = () => {
       minute: '2-digit'
     });
   };
+  
+  // New helper function to determine if dates suggest tampering
+  const isDatesDiscrepancy = (createdDate: string, modifiedDate: string): boolean => {
+    const created = new Date(createdDate).getTime();
+    const modified = new Date(modifiedDate).getTime();
+    
+    // If modified date is more than 30 minutes after creation date, flag as suspicious
+    return (modified - created) > (30 * 60 * 1000);
+  };
 
   const getIssueIcon = (type: string) => {
     switch (type) {
@@ -188,11 +197,28 @@ const Results = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <span className="text-white/50 text-sm">Created:</span>
-                      <span className="text-white/90 text-sm">{formatDate(result.metadata.dateCreated)}</span>
+                      <span className={`text-white/90 text-sm ${
+                        isDatesDiscrepancy(result.metadata.dateCreated, result.metadata.dateModified) 
+                          ? 'text-truthscan-yellow' 
+                          : ''
+                      }`}>
+                        {formatDate(result.metadata.dateCreated)}
+                      </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <span className="text-white/50 text-sm">Modified:</span>
-                      <span className="text-white/90 text-sm">{formatDate(result.metadata.dateModified)}</span>
+                      <span className={`text-white/90 text-sm ${
+                        isDatesDiscrepancy(result.metadata.dateCreated, result.metadata.dateModified) 
+                          ? 'text-truthscan-yellow' 
+                          : ''
+                      }`}>
+                        {formatDate(result.metadata.dateModified)}
+                        {isDatesDiscrepancy(result.metadata.dateCreated, result.metadata.dateModified) && (
+                          <span className="ml-2 text-xs text-truthscan-yellow italic">
+                            (Modified later)
+                          </span>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>

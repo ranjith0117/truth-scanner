@@ -38,12 +38,24 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
       : 'Forged';
 
   const now = new Date();
-  const created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 365);
   
-  // Always create a time gap for modified vs created dates on forged documents
-  const modified = isForged 
-    ? new Date(created.getTime() + Math.random() * 1000 * 60 * 60 * 24 * 30 + 1000 * 60 * 60) 
-    : created;
+  // For authentic documents, created and modified dates should be identical or very close
+  // For forged documents, create a noticeable time gap
+  let created, modified;
+  
+  if (isForged) {
+    // For forged documents, create dates with suspicious gaps
+    created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 365); // Up to a year ago
+    // Add a significant gap for forged documents (at least 1 day, up to 30 days)
+    modified = new Date(created.getTime() + (1000 * 60 * 60 * 24) + Math.random() * 1000 * 60 * 60 * 24 * 29);
+  } else {
+    // For authentic documents, dates should be same or very close (within minutes)
+    created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 30); // Up to a month ago
+    // Either exact same date or very small difference (0-5 minutes) for legitimate files
+    modified = Math.random() > 0.5 
+      ? new Date(created.getTime()) // Exact same timestamp
+      : new Date(created.getTime() + Math.random() * 1000 * 60 * 5); // 0-5 minute difference
+  }
 
   const issues = [];
   
@@ -54,11 +66,15 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
       description: 'Pixel inconsistencies detected in image',
       location: 'Bottom right quadrant'
     });
-    issues.push({
-      type: 'Warning',
-      description: 'Metadata timestamp anomalies',
-      location: 'File properties'
-    });
+    
+    // Only add timestamp anomaly issue if there's a significant gap
+    if (modified.getTime() - created.getTime() > 1000 * 60 * 60 * 12) { // If gap is > 12 hours
+      issues.push({
+        type: 'Warning',
+        description: 'Metadata timestamp anomalies: modified date significantly later than creation date',
+        location: 'File properties'
+      });
+    }
     
     // Add more detailed forgery issues
     issues.push({
