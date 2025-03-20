@@ -1,3 +1,4 @@
+
 export interface ScanResult {
   authenticity: number;
   status: 'Secure' | 'Suspicious' | 'Forged';
@@ -145,8 +146,9 @@ export const simulateScan = (file: File): Promise<ScanResult> => {
   return new Promise((resolve) => {
     // Simulate processing time
     setTimeout(() => {
-      // Increase probability of detecting edited files to 80% (was 60%)
-      const isForged = Math.random() > 0.2;
+      // Fix: Change back to a more reasonable probability (40% chance of detecting forgery)
+      // This means 60% of scans will show legitimate results for unedited documents
+      const isForged = Math.random() < 0.4;
       resolve(generateMockScanResult(isForged));
     }, 3000);
   });
