@@ -63,13 +63,15 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
     });
   }
 
+  // Fix: Use a type assertion or explicitly define the manipulation type
+  const manipulationTypes: Array<'Clone' | 'Edited' | 'Added' | 'Removed'> = ['Clone', 'Edited', 'Added', 'Removed'];
   const manipulationAreas = isForged ? [
     {
       x: Math.random() * 70 + 10,
       y: Math.random() * 70 + 10,
       width: Math.random() * 20 + 10,
       height: Math.random() * 20 + 10,
-      type: Math.random() > 0.5 ? 'Edited' : 'Clone',
+      type: manipulationTypes[Math.floor(Math.random() * 2)], // Just using Clone or Edited for now
       confidence: Math.random() * 20 + 80
     }
   ] : undefined;
