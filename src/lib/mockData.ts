@@ -55,6 +55,15 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
       description: 'Metadata timestamp anomalies',
       location: 'File properties'
     });
+    
+    // Add additional issues for forged documents
+    if (Math.random() > 0.5) {
+      issues.push({
+        type: 'Critical',
+        description: 'Digital signature mismatch detected',
+        location: 'Document metadata'
+      });
+    }
   } else if (Math.random() > 0.7) {
     issues.push({
       type: 'Info',
@@ -63,16 +72,30 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
     });
   }
 
+  const manipulationTypes: ('Clone' | 'Edited' | 'Added' | 'Removed')[] = ['Clone', 'Edited', 'Added', 'Removed'];
+  
   const manipulationAreas = isForged ? [
     {
       x: Math.random() * 70 + 10,
       y: Math.random() * 70 + 10,
       width: Math.random() * 20 + 10,
       height: Math.random() * 20 + 10,
-      type: Math.random() > 0.5 ? 'Edited' : 'Clone',
+      type: manipulationTypes[Math.floor(Math.random() * manipulationTypes.length)],
       confidence: Math.random() * 20 + 80
     }
   ] : undefined;
+  
+  // Add additional manipulation areas for heavily forged documents
+  if (isForged && authenticity < 40 && Math.random() > 0.5) {
+    manipulationAreas?.push({
+      x: Math.random() * 70 + 10,
+      y: Math.random() * 70 + 10,
+      width: Math.random() * 20 + 10,
+      height: Math.random() * 20 + 10,
+      type: manipulationTypes[Math.floor(Math.random() * manipulationTypes.length)],
+      confidence: Math.random() * 20 + 80
+    });
+  }
 
   return {
     authenticity: Math.round(authenticity * 10) / 10,
@@ -93,8 +116,8 @@ export const simulateScan = (file: File): Promise<ScanResult> => {
   return new Promise((resolve) => {
     // Simulate processing time
     setTimeout(() => {
-      // Randomly determine if the file should be considered forged
-      const isForged = Math.random() > 0.7;
+      // Increase probability of forged documents to 60% instead of 30%
+      const isForged = Math.random() > 0.4;
       resolve(generateMockScanResult(isForged));
     }, 3000);
   });
