@@ -50,7 +50,9 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
     }, 300);
 
     try {
+      console.log("Processing file:", file.name, file.type, file.size);
       const result = await simulateScan(file);
+      console.log("Scan result:", result);
       setProgress(100);
       
       setTimeout(() => {
@@ -65,6 +67,7 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
         }
       }, 500);
     } catch (error) {
+      console.error("Scan failed:", error);
       toast({
         title: "Scan Failed",
         description: "There was an error processing your file.",

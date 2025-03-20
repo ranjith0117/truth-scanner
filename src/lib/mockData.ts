@@ -138,7 +138,7 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
       y: Math.random() * 70 + 10,
       width: Math.random() * 20 + 10,
       height: Math.random() * 20 + 10,
-      type: randomType, // Fixed: Explicitly use a typed value from the array
+      type: randomType, // Using explicitly typed value from the array
       confidence: Math.random() * 10 + 90
     });
   }
@@ -147,7 +147,7 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
     authenticity: Math.round(authenticity * 10) / 10,
     status,
     metadata: {
-      fileName: 'document.jpg',
+      fileName: 'document.jpg', // This will be overridden by the actual filename
       fileType: 'JPEG Image',
       fileSize: `${Math.floor(Math.random() * 10) + 1}.${Math.floor(Math.random() * 100)}MB`,
       dateCreated: created.toISOString(),
@@ -162,10 +162,36 @@ export const simulateScan = (file: File): Promise<ScanResult> => {
   return new Promise((resolve) => {
     // Simulate processing time
     setTimeout(() => {
-      // Fix: Change back to a more reasonable probability (40% chance of detecting forgery)
-      // This means 60% of scans will show legitimate results for unedited documents
-      const isForged = Math.random() < 0.4;
-      resolve(generateMockScanResult(isForged));
+      // Change to a more reasonable probability (30% chance of detecting forgery)
+      // This means 70% of scans will show legitimate results for unedited documents
+      const isForged = Math.random() < 0.3;
+      
+      // Generate the mock result
+      const result = generateMockScanResult(isForged);
+      
+      // Update the result with the actual file details
+      result.metadata.fileName = file.name;
+      
+      // Set fileType based on actual file type
+      if (file.type) {
+        if (file.type.includes('jpeg') || file.type.includes('jpg')) {
+          result.metadata.fileType = 'JPEG Image';
+        } else if (file.type.includes('png')) {
+          result.metadata.fileType = 'PNG Image';
+        } else if (file.type.includes('pdf')) {
+          result.metadata.fileType = 'PDF Document';
+        } else if (file.type.includes('image')) {
+          result.metadata.fileType = 'Image';
+        } else {
+          result.metadata.fileType = file.type;
+        }
+      }
+      
+      // Set accurate file size
+      const fileSizeInMB = file.size / (1024 * 1024);
+      result.metadata.fileSize = `${fileSizeInMB.toFixed(2)}MB`;
+      
+      resolve(result);
     }, 3000);
   });
 };
