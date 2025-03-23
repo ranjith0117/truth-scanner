@@ -51,6 +51,8 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
 
     try {
       console.log("Processing file:", file.name, file.type, file.size);
+      console.log("File last modified:", new Date(file.lastModified).toLocaleString());
+      
       const result = await simulateScan(file);
       console.log("Scan result:", result);
       setProgress(100);
@@ -63,6 +65,8 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
           // Store result in sessionStorage and navigate to results
           sessionStorage.setItem('scanResult', JSON.stringify(result));
           sessionStorage.setItem('fileName', file.name);
+          // Also store file last modified date for reference
+          sessionStorage.setItem('fileLastModified', file.lastModified.toString());
           navigate('/results');
         }
       }, 500);

@@ -24,7 +24,7 @@ export interface ScanResult {
   }[];
 }
 
-export const generateMockScanResult = (isForged: boolean = false): ScanResult => {
+export const generateMockScanResult = (isForged: boolean = false, fileLastModified?: number): ScanResult => {
   // Generate a more polarized authenticity score - either very high or much lower for forged
   const authenticity = isForged 
     ? Math.random() * 40 + 10 // 10-50% for forged documents (lower score than before)
@@ -39,22 +39,36 @@ export const generateMockScanResult = (isForged: boolean = false): ScanResult =>
 
   const now = new Date();
   
-  // For authentic documents, created and modified dates should be identical or very close
-  // For forged documents, create a noticeable time gap
+  // Use actual file modification date if available, otherwise generate realistic dates
   let created, modified;
   
-  if (isForged) {
-    // For forged documents, create dates with suspicious gaps
-    created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 365); // Up to a year ago
-    // Add a significant gap for forged documents (at least 1 day, up to 30 days)
-    modified = new Date(created.getTime() + (1000 * 60 * 60 * 24) + Math.random() * 1000 * 60 * 60 * 24 * 29);
+  if (fileLastModified) {
+    const fileModDate = new Date(fileLastModified);
+    
+    if (isForged) {
+      // For forged documents, create a fake creation date that's earlier than the modification date
+      created = new Date(fileModDate.getTime() - (1000 * 60 * 60 * 24 * Math.random() * 30)); // Up to 30 days before mod date
+      modified = fileModDate;
+    } else {
+      // For authentic documents, creation and modification dates should be identical or very close
+      created = fileModDate;
+      modified = fileModDate;
+    }
   } else {
-    // For authentic documents, dates should be same or very close (within minutes)
-    created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 30); // Up to a month ago
-    // Either exact same date or very small difference (0-5 minutes) for legitimate files
-    modified = Math.random() > 0.5 
-      ? new Date(created.getTime()) // Exact same timestamp
-      : new Date(created.getTime() + Math.random() * 1000 * 60 * 5); // 0-5 minute difference
+    // Fallback to random dates if no file date is available
+    if (isForged) {
+      // For forged documents, create dates with suspicious gaps
+      created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 365); // Up to a year ago
+      // Add a significant gap for forged documents (at least 1 day, up to 30 days)
+      modified = new Date(created.getTime() + (1000 * 60 * 60 * 24) + Math.random() * 1000 * 60 * 60 * 24 * 29);
+    } else {
+      // For authentic documents, dates should be same or very close (within minutes)
+      created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 30); // Up to a month ago
+      // Either exact same date or very small difference (0-5 minutes) for legitimate files
+      modified = Math.random() > 0.5 
+        ? new Date(created.getTime()) // Exact same timestamp
+        : new Date(created.getTime() + Math.random() * 1000 * 60 * 5); // 0-5 minute difference
+    }
   }
 
   const issues = [];
@@ -162,12 +176,20 @@ export const simulateScan = (file: File): Promise<ScanResult> => {
   return new Promise((resolve) => {
     // Simulate processing time
     setTimeout(() => {
-      // Change to a more reasonable probability (30% chance of detecting forgery)
-      // This means 70% of scans will show legitimate results for unedited documents
-      const isForged = Math.random() < 0.3;
+      console.log("File metadata:", {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+        lastModifiedDate: new Date(file.lastModified)
+      });
       
-      // Generate the mock result
-      const result = generateMockScanResult(isForged);
+      // Change to a more reasonable probability (20% chance of detecting forgery)
+      // This means 80% of scans will show legitimate results for unedited documents
+      const isForged = Math.random() < 0.2;
+      
+      // Generate the mock result, passing in the actual file last modified date
+      const result = generateMockScanResult(isForged, file.lastModified);
       
       // Update the result with the actual file details
       result.metadata.fileName = file.name;
@@ -180,6 +202,16 @@ export const simulateScan = (file: File): Promise<ScanResult> => {
           result.metadata.fileType = 'PNG Image';
         } else if (file.type.includes('pdf')) {
           result.metadata.fileType = 'PDF Document';
+        } else if (file.type.includes('gif')) {
+          result.metadata.fileType = 'GIF Image';
+        } else if (file.type.includes('svg')) {
+          result.metadata.fileType = 'SVG Image';
+        } else if (file.type.includes('webp')) {
+          result.metadata.fileType = 'WebP Image';
+        } else if (file.type.includes('bmp')) {
+          result.metadata.fileType = 'BMP Image';
+        } else if (file.type.includes('tiff') || file.type.includes('tif')) {
+          result.metadata.fileType = 'TIFF Image';
         } else if (file.type.includes('image')) {
           result.metadata.fileType = 'Image';
         } else {
@@ -195,3 +227,4 @@ export const simulateScan = (file: File): Promise<ScanResult> => {
     }, 3000);
   });
 };
+

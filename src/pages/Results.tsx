@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, AlertTriangle, Check, ChevronRight, Info, Download, File } from 'lucide-react';
@@ -10,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 const Results = () => {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [fileName, setFileName] = useState<string>('document.jpg');
+  const [fileLastModified, setFileLastModified] = useState<number | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -17,6 +17,7 @@ const Results = () => {
     // Retrieve result from sessionStorage
     const storedResult = sessionStorage.getItem('scanResult');
     const storedFileName = sessionStorage.getItem('fileName');
+    const storedLastModified = sessionStorage.getItem('fileLastModified');
     
     if (!storedResult) {
       // If no result in storage, redirect to scanner
@@ -29,6 +30,9 @@ const Results = () => {
       setResult(parsedResult);
       if (storedFileName) {
         setFileName(storedFileName);
+      }
+      if (storedLastModified) {
+        setFileLastModified(parseInt(storedLastModified));
       }
     } catch (error) {
       toast({
@@ -96,17 +100,66 @@ const Results = () => {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
-  
-  // New helper function to determine if dates suggest tampering
-  const isDatesDiscrepancy = (createdDate: string, modifiedDate: string): boolean => {
+
+  const analyzeDates = (createdDate: string, modifiedDate: string): { 
+    isDiscrepancy: boolean, 
+    timeDiff: string,
+    severity: 'normal' | 'suspicious' | 'critical' 
+  } => {
     const created = new Date(createdDate).getTime();
     const modified = new Date(modifiedDate).getTime();
+    const diffInMs = modified - created;
     
-    // If modified date is more than 30 minutes after creation date, flag as suspicious
-    return (modified - created) > (30 * 60 * 1000);
+    let timeDiff = '';
+    const seconds = Math.floor(diffInMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) {
+      timeDiff = `${days} day${days > 1 ? 's' : ''}`;
+    } else if (hours > 0) {
+      timeDiff = `${hours} hour${hours > 1 ? 's' : ''}`;
+    } else if (minutes > 0) {
+      timeDiff = `${minutes} minute${minutes > 1 ? 's' : ''}`;
+    } else if (seconds > 0) {
+      timeDiff = `${seconds} second${seconds > 1 ? 's' : ''}`;
+    } else {
+      timeDiff = 'No difference';
+    }
+    
+    let severity: 'normal' | 'suspicious' | 'critical' = 'normal';
+    
+    if (diffInMs === 0 || diffInMs < 5 * 60 * 1000) {
+      severity = 'normal';
+    } else if (diffInMs < 60 * 60 * 1000) {
+      severity = 'suspicious';
+    } else {
+      severity = 'critical';
+    }
+    
+    return {
+      isDiscrepancy: diffInMs > 5 * 60 * 1000,
+      timeDiff,
+      severity
+    };
+  };
+
+  const getDateColor = (severity: 'normal' | 'suspicious' | 'critical') => {
+    switch (severity) {
+      case 'normal':
+        return 'text-white/90';
+      case 'suspicious':
+        return 'text-truthscan-yellow';
+      case 'critical':
+        return 'text-truthscan-red';
+      default:
+        return 'text-white/90';
+    }
   };
 
   const getIssueIcon = (type: string) => {
@@ -147,7 +200,6 @@ const Results = () => {
               </button>
             </div>
 
-            {/* Main result card */}
             <div className="glass-card rounded-xl p-6 md:p-8 mb-8">
               <div className="flex flex-col md:flex-row justify-between gap-8">
                 <div className="flex flex-col">
@@ -195,37 +247,76 @@ const Results = () => {
                       <span className="text-white/50 text-sm">File Size:</span>
                       <span className="text-white/90 text-sm">{result.metadata.fileSize}</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <span className="text-white/50 text-sm">Created:</span>
-                      <span className={`text-white/90 text-sm ${
-                        isDatesDiscrepancy(result.metadata.dateCreated, result.metadata.dateModified) 
-                          ? 'text-truthscan-yellow' 
-                          : ''
-                      }`}>
-                        {formatDate(result.metadata.dateCreated)}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <span className="text-white/50 text-sm">Modified:</span>
-                      <span className={`text-white/90 text-sm ${
-                        isDatesDiscrepancy(result.metadata.dateCreated, result.metadata.dateModified) 
-                          ? 'text-truthscan-yellow' 
-                          : ''
-                      }`}>
-                        {formatDate(result.metadata.dateModified)}
-                        {isDatesDiscrepancy(result.metadata.dateCreated, result.metadata.dateModified) && (
-                          <span className="ml-2 text-xs text-truthscan-yellow italic">
-                            (Modified later)
-                          </span>
-                        )}
-                      </span>
-                    </div>
+                    
+                    {result && (
+                      <>
+                        {(() => {
+                          const dateAnalysis = analyzeDates(
+                            result.metadata.dateCreated, 
+                            result.metadata.dateModified
+                          );
+                          
+                          return (
+                            <>
+                              <div className="grid grid-cols-2 gap-2">
+                                <span className="text-white/50 text-sm">Created:</span>
+                                <span className={getDateColor(dateAnalysis.severity)}>
+                                  {formatDate(result.metadata.dateCreated)}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <span className="text-white/50 text-sm">Modified:</span>
+                                <div className={getDateColor(dateAnalysis.severity)}>
+                                  {formatDate(result.metadata.dateModified)}
+                                  {dateAnalysis.isDiscrepancy && (
+                                    <div className="text-xs mt-1 italic">
+                                      Modified {dateAnalysis.timeDiff} after creation
+                                      {dateAnalysis.severity === 'critical' && 
+                                        ' (Highly suspicious)'}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {dateAnalysis.isDiscrepancy && (
+                                <div className={`mt-2 p-3 rounded-lg border text-sm ${
+                                  dateAnalysis.severity === 'suspicious' 
+                                    ? 'bg-truthscan-yellow/10 border-truthscan-yellow/30 text-truthscan-yellow' 
+                                    : 'bg-truthscan-red/10 border-truthscan-red/30 text-truthscan-red'
+                                }`}>
+                                  <div className="flex items-start gap-2">
+                                    <AlertTriangle className="w-4 h-4 mt-0.5" />
+                                    <div>
+                                      <span className="font-medium">Metadata timestamp anomaly detected</span>
+                                      <p className="mt-1">
+                                        The file was modified {dateAnalysis.timeDiff} after it was created.
+                                        {dateAnalysis.severity === 'critical' 
+                                          ? ' This significant time gap strongly suggests the file was edited after its original creation.' 
+                                          : ' This time gap suggests possible manipulation.'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {fileLastModified && (
+                                <div className="grid grid-cols-2 gap-2 mt-2 border-t border-white/10 pt-2">
+                                  <span className="text-white/50 text-sm">System Last Modified:</span>
+                                  <span className="text-white/90 text-sm">
+                                    {new Date(fileLastModified).toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Detected issues */}
             <div className="glass-card rounded-xl p-6 md:p-8 mb-8">
               <h2 className="text-xl font-medium text-white mb-6">Detected Issues</h2>
               
@@ -273,7 +364,6 @@ const Results = () => {
               )}
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end space-x-4">
               <button
                 className="px-5 py-2.5 bg-truthscan-dark-gray text-white rounded-lg flex items-center gap-2 text-sm hover:bg-truthscan-gray transition-colors"
