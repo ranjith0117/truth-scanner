@@ -20,7 +20,7 @@ interface ExtractedMetadata {
 }
 
 // Add custom interface to extend PDFExtractResult with the fields we need
-interface EnhancedPDFExtractResult extends PDFExtractResult {
+interface EnhancedPDFExtractResult extends Omit<PDFExtractResult, 'pdfInfo'> {
   metadata?: {
     _metadata?: {
       creationdate?: string;
@@ -32,7 +32,7 @@ interface EnhancedPDFExtractResult extends PDFExtractResult {
       title?: string;
     }
   };
-  pdfInfo?: {
+  pdfInfo: {
     numPages: number;
     fingerprint: string;
     version?: string;
