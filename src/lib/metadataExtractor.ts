@@ -33,6 +33,8 @@ interface EnhancedPDFExtractResult extends PDFExtractResult {
     }
   };
   pdfInfo?: {
+    numPages: number;
+    fingerprint: string;
     version?: string;
     isEncrypted?: boolean;
   };
