@@ -1,3 +1,4 @@
+
 import { extractMetadata } from './metadataExtractor';
 
 export interface ScanResult {
@@ -190,17 +191,17 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     
     const potentialIssues = [
       {
-        type: 'Critical',
+        type: 'Critical' as const,
         description: 'Digital signature verification failed. The file has been modified after signing.',
         location: 'Digital signature'
       },
       {
-        type: 'Critical',
+        type: 'Critical' as const,
         description: 'Pixel manipulation detected in multiple regions. Evidence of digital alteration.',
         location: 'Image content'
       },
       {
-        type: 'Warning',
+        type: 'Warning' as const,
         description: 'Inconsistent compression patterns detected. Possible sign of splicing or content replacement.',
         location: 'Image data'
       }
@@ -222,17 +223,17 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     
     const potentialIssues = [
       {
-        type: 'Warning',
+        type: 'Warning' as const,
         description: 'Software artifacts detected. This document was processed with editing software.',
         location: 'Document properties'
       },
       {
-        type: 'Warning',
+        type: 'Warning' as const,
         description: 'Timestamp anomalies detected. Creation and modification dates show unusual patterns.',
         location: 'Metadata'
       },
       {
-        type: 'Info',
+        type: 'Info' as const,
         description: 'File saved with different software than it was created with. May indicate editing.',
         location: 'Software information'
       }

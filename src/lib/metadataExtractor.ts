@@ -132,8 +132,11 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
         const arrayBuffer = e.target.result as ArrayBuffer;
         
         try {
-          // Convert Uint8Array to Buffer-compatible format
-          const data = await pdfExtract.extractBuffer(new Uint8Array(arrayBuffer), {});
+          // Use the extractBuffer with the correct type handling
+          // The library actually handles Uint8Array despite TypeScript errors
+          const dataPromise = pdfExtract.extractBuffer(new Uint8Array(arrayBuffer), {}) as Promise<PDFExtractResult>;
+          const data: PDFExtractResult = await dataPromise;
+          
           console.log('Extracted PDF data:', data);
           
           // Try to extract creation and modification dates
@@ -142,7 +145,7 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
           let author = undefined;
           let producer = undefined;
           
-          if (data.metadata?._metadata) {
+          if (data.metadata && data.metadata._metadata) {
             if (data.metadata._metadata.creationdate) {
               const dateStr = data.metadata._metadata.creationdate;
               try {
@@ -210,12 +213,12 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
             author,
             software: producer,
             additionalInfo: {
-              pageCount: data.pages?.length || 0,
-              pdfVersion: data.pdfInfo?.version,
-              creator: data.metadata?._metadata?.creator,
-              keywords: data.metadata?._metadata?.keywords,
-              title: data.metadata?._metadata?.title,
-              isEncrypted: data.pdfInfo?.isEncrypted,
+              pageCount: data.pages ? data.pages.length : 0,
+              pdfVersion: data.pdfInfo ? data.pdfInfo.version : undefined,
+              creator: data.metadata && data.metadata._metadata ? data.metadata._metadata.creator : undefined,
+              keywords: data.metadata && data.metadata._metadata ? data.metadata._metadata.keywords : undefined,
+              title: data.metadata && data.metadata._metadata ? data.metadata._metadata.title : undefined,
+              isEncrypted: data.pdfInfo ? data.pdfInfo.isEncrypted : undefined,
             }
           };
           
