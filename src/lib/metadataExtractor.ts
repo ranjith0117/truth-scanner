@@ -1,5 +1,7 @@
+
 import * as ExifParser from 'exif-parser';
 import { PDFExtract, PDFExtractResult } from 'pdf.js-extract';
+import { Buffer } from 'buffer';
 
 interface ExtractedMetadata {
   creationDate: Date | null;
@@ -18,6 +20,7 @@ interface ExtractedMetadata {
   additionalInfo?: Record<string, any>;
 }
 
+// Use Omit to exclude pdfInfo from PDFExtractResult and then redefine it
 interface EnhancedPDFExtractResult extends Omit<PDFExtractResult, 'pdfInfo'> {
   metadata?: {
     _metadata?: {
@@ -141,8 +144,10 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
         const arrayBuffer = e.target.result as ArrayBuffer;
 
         try {
+          // Convert Uint8Array to Buffer before passing to extractBuffer
+          const buffer = Buffer.from(new Uint8Array(arrayBuffer));
           const dataPromise = pdfExtract.extractBuffer(
-            new Uint8Array(arrayBuffer), 
+            buffer, 
             {}
           ) as Promise<EnhancedPDFExtractResult>;
 
