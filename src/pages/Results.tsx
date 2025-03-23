@@ -35,6 +35,7 @@ const Results = () => {
         setFileLastModified(parseInt(storedLastModified));
       }
     } catch (error) {
+      console.error("Error parsing stored result:", error);
       toast({
         title: "Error",
         description: "Failed to load scan results",
@@ -241,14 +242,14 @@ const Results = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <span className="text-white/50 text-sm">File Type:</span>
-                      <span className="text-white/90 text-sm">{result.metadata.fileType}</span>
+                      <span className="text-white/90 text-sm">{result.metadata?.fileType || 'Unknown'}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <span className="text-white/50 text-sm">File Size:</span>
-                      <span className="text-white/90 text-sm">{result.metadata.fileSize}</span>
+                      <span className="text-white/90 text-sm">{result.metadata?.fileSize || 'Unknown'}</span>
                     </div>
                     
-                    {result && (
+                    {result.metadata && (
                       <>
                         {(() => {
                           const dateAnalysis = analyzeDates(

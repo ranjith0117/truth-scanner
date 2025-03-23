@@ -69,16 +69,28 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
           onScanComplete(result);
         } else {
           // Store result in sessionStorage and navigate to results
-          sessionStorage.setItem('scanResult', JSON.stringify(result));
-          sessionStorage.setItem('fileName', file.name);
-          // Also store file last modified date for reference
-          sessionStorage.setItem('fileLastModified', file.lastModified.toString());
-          toast({
-            title: "Analysis Complete",
-            description: `Authenticity score: ${result.authenticity}%`,
-            variant: result.authenticity >= 90 ? "default" : (result.authenticity >= 60 ? "default" : "destructive")
-          });
-          navigate('/results');
+          try {
+            const resultString = JSON.stringify(result);
+            sessionStorage.setItem('scanResult', resultString);
+            sessionStorage.setItem('fileName', file.name);
+            // Also store file last modified date for reference
+            sessionStorage.setItem('fileLastModified', file.lastModified.toString());
+            
+            toast({
+              title: "Analysis Complete",
+              description: `Authenticity score: ${result.authenticity}%`,
+              variant: result.authenticity >= 90 ? "default" : (result.authenticity >= 60 ? "default" : "destructive")
+            });
+            
+            navigate('/results');
+          } catch (error) {
+            console.error("Error storing scan result:", error);
+            toast({
+              title: "Error",
+              description: "Failed to save scan results",
+              variant: "destructive"
+            });
+          }
         }
       }, 500);
     } catch (error) {
