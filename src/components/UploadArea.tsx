@@ -53,6 +53,12 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
       console.log("Processing file:", file.name, file.type, file.size);
       console.log("File last modified:", new Date(file.lastModified).toLocaleString());
       
+      // Show initial extraction toast
+      toast({
+        title: "Analyzing File",
+        description: "Extracting metadata and analyzing content...",
+      });
+      
       const result = await simulateScan(file);
       console.log("Scan result:", result);
       setProgress(100);
@@ -67,6 +73,11 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
           sessionStorage.setItem('fileName', file.name);
           // Also store file last modified date for reference
           sessionStorage.setItem('fileLastModified', file.lastModified.toString());
+          toast({
+            title: "Analysis Complete",
+            description: `Authenticity score: ${result.authenticity}%`,
+            variant: result.authenticity >= 90 ? "default" : result.authenticity >= 60 ? "secondary" : "destructive"
+          });
           navigate('/results');
         }
       }, 500);
@@ -78,6 +89,7 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
         variant: "destructive"
       });
       setIsLoading(false);
+      setProgress(0);
     }
   }, [navigate, onScanComplete, toast]);
 
