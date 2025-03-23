@@ -25,6 +25,12 @@ export interface ScanResult {
   }[];
 }
 
+interface Issue {
+  type: 'Warning' | 'Critical' | 'Info';
+  description: string;
+  location?: string;
+}
+
 export const generateMockScanResult = (isForged: boolean = false, fileLastModified?: number): ScanResult => {
   const authenticity = isForged 
     ? Math.random() * 40 + 10
@@ -242,16 +248,11 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
   }
   
   const formattedMetadata = {
+    fileName: file.name,
     fileType: metadata.fileType,
     fileSize: metadata.fileSize,
     dateCreated: metadata.creationDate?.toISOString() || new Date().toISOString(),
     dateModified: metadata.modificationDate?.toISOString() || new Date().toISOString(),
-    software: metadata.software || 'Unknown',
-    device: metadata.device || 'Unknown',
-    dimensions: metadata.dimensions 
-      ? `${metadata.dimensions.width}×${metadata.dimensions.height}`
-      : 'Unknown',
-    additionalMetadata: metadata.additionalInfo || {}
   };
   
   await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1500));

@@ -1,6 +1,6 @@
 
 import * as ExifParser from 'exif-parser';
-import { PDFExtract } from 'pdf.js-extract';
+import { PDFExtract, PDFExtractResult } from 'pdf.js-extract';
 
 interface ExtractedMetadata {
   creationDate: Date | null;
@@ -132,7 +132,8 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
         const arrayBuffer = e.target.result as ArrayBuffer;
         
         try {
-          const data = await pdfExtract.extractBuffer(new Uint8Array(arrayBuffer));
+          // Convert Uint8Array to Buffer-compatible format
+          const data = await pdfExtract.extractBuffer(new Uint8Array(arrayBuffer), {});
           console.log('Extracted PDF data:', data);
           
           // Try to extract creation and modification dates
@@ -141,8 +142,8 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
           let author = undefined;
           let producer = undefined;
           
-          if (data.metadata) {
-            if (data.metadata._metadata?.creationdate) {
+          if (data.metadata?._metadata) {
+            if (data.metadata._metadata.creationdate) {
               const dateStr = data.metadata._metadata.creationdate;
               try {
                 // PDF dates are often in format: D:YYYYMMDDHHmmSSOHH'mm'
@@ -165,7 +166,7 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
               }
             }
             
-            if (data.metadata._metadata?.moddate) {
+            if (data.metadata._metadata.moddate) {
               const dateStr = data.metadata._metadata.moddate;
               try {
                 if (dateStr.startsWith('D:')) {
@@ -188,11 +189,11 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
             }
             
             // Extract author and producer if available
-            if (data.metadata._metadata?.author) {
+            if (data.metadata._metadata.author) {
               author = data.metadata._metadata.author;
             }
             
-            if (data.metadata._metadata?.producer) {
+            if (data.metadata._metadata.producer) {
               producer = data.metadata._metadata.producer;
             }
           }
@@ -209,7 +210,7 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
             author,
             software: producer,
             additionalInfo: {
-              pageCount: data.pages.length,
+              pageCount: data.pages?.length || 0,
               pdfVersion: data.pdfInfo?.version,
               creator: data.metadata?._metadata?.creator,
               keywords: data.metadata?._metadata?.keywords,

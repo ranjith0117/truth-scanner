@@ -76,7 +76,7 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
           toast({
             title: "Analysis Complete",
             description: `Authenticity score: ${result.authenticity}%`,
-            variant: result.authenticity >= 90 ? "default" : result.authenticity >= 60 ? "secondary" : "destructive"
+            variant: result.authenticity >= 90 ? "default" : (result.authenticity >= 60 ? "default" : "destructive")
           });
           navigate('/results');
         }
