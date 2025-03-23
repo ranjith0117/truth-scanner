@@ -86,39 +86,6 @@ const About = () => {
             </div>
           </section>
 
-          {/* Use Cases Section */}
-          <section className="mb-20">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-bold text-white mb-6">Use Cases</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FeatureCard
-                  icon={Image}
-                  title="Journalism & Media"
-                  description="Verify the authenticity of news images and combat visual misinformation before publication."
-                />
-                
-                <FeatureCard
-                  icon={FileText}
-                  title="Legal & Compliance"
-                  description="Authenticate legal documents, evidence, and contractual agreements in legal proceedings."
-                />
-                
-                <FeatureCard
-                  icon={Lock}
-                  title="Corporate Security"
-                  description="Protect against document fraud, verify employee credentials, and secure sensitive information."
-                />
-                
-                <FeatureCard
-                  icon={Zap}
-                  title="Personal Use"
-                  description="Verify the authenticity of online content, personal documents, and digital communications."
-                />
-              </div>
-            </div>
-          </section>
-
           {/* CTA Section */}
           <section>
             <div className="max-w-3xl mx-auto text-center">
