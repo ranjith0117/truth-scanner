@@ -1,3 +1,5 @@
+import { extractMetadata } from './metadataExtractor';
+
 export interface ScanResult {
   status: string;
   authenticity: number;
@@ -61,10 +63,6 @@ function getRandomLocation(): string | undefined {
   return mockLocations[Math.floor(Math.random() * mockLocations.length)];
 }
 
-function getRandomSoftware(): string {
-  return mockSoftware[Math.floor(Math.random() * mockSoftware.length)];
-}
-
 export const simulateScan = async (file: File): Promise<ScanResult> => {
   // Simulate a scan with a delay
   await new Promise(resolve => setTimeout(resolve, 2500));
@@ -72,6 +70,10 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
   console.log("Simulating scan for file:", file.name);
   
   try {
+    // Extract real metadata from the file
+    const extractedMetadata = await extractMetadata(file);
+    console.log("Extracted metadata:", extractedMetadata);
+    
     // Generate a random authenticity score
     const randomScore = Math.floor(Math.random() * 100) + 1;
     
@@ -101,17 +103,17 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
       }
     }
     
-    // Create a mock metadata object
+    // Create a metadata object from the extracted real metadata
     const metadata = {
-      dateCreated: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-      dateModified: new Date(Date.now() - Math.random() * 5000000000).toISOString(),
-      fileType: file.type.includes('pdf') ? 'PDF Document' : 'Image',
-      fileSize: formatFileSize(file.size),
-      dimensions: file.type.includes('image') ? `${Math.round(Math.random() * 1000 + 1000)}x${Math.round(Math.random() * 1000 + 1000)}` : undefined,
-      software: getRandomSoftware()
+      dateCreated: extractedMetadata.creationDate ? extractedMetadata.creationDate.toISOString() : new Date().toISOString(),
+      dateModified: extractedMetadata.modificationDate ? extractedMetadata.modificationDate.toISOString() : new Date().toISOString(),
+      fileType: extractedMetadata.fileType,
+      fileSize: extractedMetadata.fileSize,
+      dimensions: extractedMetadata.dimensions ? `${extractedMetadata.dimensions.width}x${extractedMetadata.dimensions.height}` : undefined,
+      software: extractedMetadata.software
     };
     
-    // Return the mock scan result
+    // Return the scan result with real metadata
     return {
       status,
       authenticity: randomScore,
