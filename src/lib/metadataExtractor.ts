@@ -1,7 +1,6 @@
 
 import * as ExifParser from 'exif-parser';
-import { PDFExtract, PDFExtractResult } from 'pdf.js-extract';
-import { Buffer } from 'buffer';
+import { PDFExtract } from 'pdf.js-extract';
 
 interface ExtractedMetadata {
   creationDate: Date | null;
@@ -20,27 +19,7 @@ interface ExtractedMetadata {
   additionalInfo?: Record<string, any>;
 }
 
-// Use Omit to exclude pdfInfo from PDFExtractResult and then redefine it
-interface EnhancedPDFExtractResult extends Omit<PDFExtractResult, 'pdfInfo'> {
-  metadata?: {
-    _metadata?: {
-      creationdate?: string;
-      moddate?: string;
-      author?: string;
-      producer?: string;
-      creator?: string;
-      keywords?: string;
-      title?: string;
-    }
-  };
-  pdfInfo: {
-    numPages: number;
-    fingerprint: string;
-    version?: string;
-    isEncrypted?: boolean;
-  };
-}
-
+// Simple file size formatter
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + ' B';
   else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -50,6 +29,7 @@ const formatFileSize = (bytes: number): string => {
 
 export const extractImageMetadata = async (file: File): Promise<ExtractedMetadata> => {
   return new Promise((resolve, reject) => {
+    console.log('Starting image metadata extraction');
     const reader = new FileReader();
 
     reader.onload = function(e) {
@@ -58,71 +38,87 @@ export const extractImageMetadata = async (file: File): Promise<ExtractedMetadat
           throw new Error('Failed to read file');
         }
 
+        console.log('File read successful, parsing EXIF data');
         const buffer = e.target.result as ArrayBuffer;
-        const parser = ExifParser.create(buffer);
-        const result = parser.parse();
+        
+        try {
+          const parser = ExifParser.create(buffer);
+          const result = parser.parse();
 
-        console.log('Extracted EXIF data:', result);
+          console.log('Extracted EXIF data:', result);
 
-        let dimensions;
-        if (result.imageSize && result.imageSize.width && result.imageSize.height) {
-          dimensions = {
-            width: result.imageSize.width,
-            height: result.imageSize.height
-          };
-        }
-
-        let creationDate = null;
-        let modificationDate = null;
-
-        if (result.tags && result.tags.DateTimeOriginal) {
-          creationDate = new Date(result.tags.DateTimeOriginal * 1000);
-        } else if (result.tags && result.tags.DateTime) {
-          creationDate = new Date(result.tags.DateTime * 1000);
-        }
-
-        if (result.tags && result.tags.ModifyDate) {
-          modificationDate = new Date(result.tags.ModifyDate * 1000);
-        }
-
-        if (!creationDate) creationDate = new Date(file.lastModified);
-        if (!modificationDate) modificationDate = new Date(file.lastModified);
-
-        const metadata: ExtractedMetadata = {
-          creationDate,
-          modificationDate,
-          fileType: file.type || 'image',
-          fileSize: formatFileSize(file.size),
-          make: result.tags?.Make,
-          model: result.tags?.Model,
-          software: result.tags?.Software,
-          device: result.tags?.Model ? `${result.tags.Make || ''} ${result.tags.Model}`.trim() : undefined,
-          dimensions,
-          additionalInfo: {
-            orientation: result.tags?.Orientation,
-            flash: result.tags?.Flash,
-            focalLength: result.tags?.FocalLength,
-            exposureTime: result.tags?.ExposureTime,
-            iso: result.tags?.ISO,
-            gpsLatitude: result.tags?.GPSLatitude,
-            gpsLongitude: result.tags?.GPSLongitude,
+          let dimensions;
+          if (result.imageSize && result.imageSize.width && result.imageSize.height) {
+            dimensions = {
+              width: result.imageSize.width,
+              height: result.imageSize.height
+            };
           }
-        };
 
-        resolve(metadata);
+          let creationDate = null;
+          let modificationDate = null;
+
+          if (result.tags && result.tags.DateTimeOriginal) {
+            creationDate = new Date(result.tags.DateTimeOriginal * 1000);
+          } else if (result.tags && result.tags.DateTime) {
+            creationDate = new Date(result.tags.DateTime * 1000);
+          }
+
+          if (result.tags && result.tags.ModifyDate) {
+            modificationDate = new Date(result.tags.ModifyDate * 1000);
+          }
+
+          if (!creationDate) creationDate = new Date(file.lastModified);
+          if (!modificationDate) modificationDate = new Date(file.lastModified);
+
+          const metadata: ExtractedMetadata = {
+            creationDate,
+            modificationDate,
+            fileType: file.type || 'image',
+            fileSize: formatFileSize(file.size),
+            make: result.tags?.Make,
+            model: result.tags?.Model,
+            software: result.tags?.Software,
+            device: result.tags?.Model ? `${result.tags.Make || ''} ${result.tags.Model}`.trim() : undefined,
+            dimensions,
+            additionalInfo: {
+              orientation: result.tags?.Orientation,
+              flash: result.tags?.Flash,
+              focalLength: result.tags?.FocalLength,
+              exposureTime: result.tags?.ExposureTime,
+              iso: result.tags?.ISO,
+              gpsLatitude: result.tags?.GPSLatitude,
+              gpsLongitude: result.tags?.GPSLongitude,
+            }
+          };
+
+          console.log('Image metadata extracted successfully', metadata);
+          resolve(metadata);
+        } catch (exifError) {
+          console.warn('Error parsing EXIF data, falling back to basic metadata', exifError);
+          // Fallback to basic file metadata
+          const basicMetadata: ExtractedMetadata = {
+            creationDate: new Date(file.lastModified),
+            modificationDate: new Date(file.lastModified),
+            fileType: file.type || 'image',
+            fileSize: formatFileSize(file.size),
+          };
+          resolve(basicMetadata);
+        }
       } catch (error) {
-        console.warn('Error parsing EXIF data, falling back to basic metadata', error);
-        const metadata: ExtractedMetadata = {
+        console.error('General error in image metadata extraction', error);
+        const fallbackMetadata: ExtractedMetadata = {
           creationDate: new Date(file.lastModified),
           modificationDate: new Date(file.lastModified),
           fileType: file.type || 'image',
           fileSize: formatFileSize(file.size),
         };
-        resolve(metadata);
+        resolve(fallbackMetadata);
       }
     };
 
-    reader.onerror = function() {
+    reader.onerror = function(error) {
+      console.error('FileReader error:', error);
       reject(new Error('Failed to read file'));
     };
 
@@ -132,6 +128,7 @@ export const extractImageMetadata = async (file: File): Promise<ExtractedMetadat
 
 export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata> => {
   return new Promise((resolve, reject) => {
+    console.log('Starting PDF metadata extraction');
     const reader = new FileReader();
 
     reader.onload = async function(e) {
@@ -140,79 +137,52 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
           throw new Error('Failed to read file');
         }
 
-        const pdfExtract = new PDFExtract();
+        console.log('PDF file read successful, parsing metadata');
         const arrayBuffer = e.target.result as ArrayBuffer;
+        const uint8Array = new Uint8Array(arrayBuffer);
 
         try {
-          // Convert Uint8Array to Buffer before passing to extractBuffer
-          const buffer = Buffer.from(new Uint8Array(arrayBuffer));
-          const dataPromise = pdfExtract.extractBuffer(
-            buffer, 
-            {}
-          ) as Promise<EnhancedPDFExtractResult>;
-
+          const pdfExtract = new PDFExtract();
+          
+          // Convert the data to a format PDF.js can work with
+          const dataPromise = pdfExtract.extractBuffer(uint8Array);
+          
           const data = await dataPromise;
-          console.log('Extracted PDF data:', data);
+          console.log('PDF data extracted:', data);
 
+          // Extract metadata from the PDF
           let creationDate = null;
           let modificationDate = null;
           let author = undefined;
           let producer = undefined;
 
+          // If metadata is available
           if (data?.metadata?._metadata) {
-            if (data.metadata._metadata.creationdate) {
-              const dateStr = data.metadata._metadata.creationdate;
+            const meta = data.metadata._metadata;
+            
+            // Try to parse creation date
+            if (meta.creationDate) {
               try {
-                if (dateStr.startsWith('D:')) {
-                  const parsedDate = new Date(
-                    parseInt(dateStr.substring(2, 6)),
-                    parseInt(dateStr.substring(6, 8)) - 1,
-                    parseInt(dateStr.substring(8, 10)),
-                    parseInt(dateStr.substring(10, 12)),
-                    parseInt(dateStr.substring(12, 14)),
-                    parseInt(dateStr.substring(14, 16))
-                  );
-
-                  if (!isNaN(parsedDate.getTime())) {
-                    creationDate = parsedDate;
-                  }
-                }
-              } catch (error) {
-                console.warn('Error parsing PDF creation date', error);
+                creationDate = new Date(meta.creationDate);
+              } catch (dateError) {
+                console.warn('Error parsing PDF creation date', dateError);
               }
             }
-
-            if (data.metadata._metadata.moddate) {
-              const dateStr = data.metadata._metadata.moddate;
+            
+            // Try to parse modification date
+            if (meta.modDate) {
               try {
-                if (dateStr.startsWith('D:')) {
-                  const parsedDate = new Date(
-                    parseInt(dateStr.substring(2, 6)),
-                    parseInt(dateStr.substring(6, 8)) - 1,
-                    parseInt(dateStr.substring(8, 10)),
-                    parseInt(dateStr.substring(10, 12)),
-                    parseInt(dateStr.substring(12, 14)),
-                    parseInt(dateStr.substring(14, 16))
-                  );
-
-                  if (!isNaN(parsedDate.getTime())) {
-                    modificationDate = parsedDate;
-                  }
-                }
-              } catch (error) {
-                console.warn('Error parsing PDF modification date', error);
+                modificationDate = new Date(meta.modDate);
+              } catch (dateError) {
+                console.warn('Error parsing PDF modification date', dateError);
               }
             }
-
-            if (data.metadata._metadata.author) {
-              author = data.metadata._metadata.author;
-            }
-
-            if (data.metadata._metadata.producer) {
-              producer = data.metadata._metadata.producer;
-            }
+            
+            author = meta.author;
+            producer = meta.producer;
           }
 
+          // Fallback to file system dates if needed
           if (!creationDate) creationDate = new Date(file.lastModified);
           if (!modificationDate) modificationDate = new Date(file.lastModified);
 
@@ -225,38 +195,37 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
             software: producer,
             additionalInfo: {
               pageCount: data.pages?.length || 0,
-              pdfVersion: data.pdfInfo?.version,
-              creator: data.metadata?._metadata?.creator,
-              keywords: data.metadata?._metadata?.keywords,
-              title: data.metadata?._metadata?.title,
-              isEncrypted: data.pdfInfo?.isEncrypted,
+              isEncrypted: false,
+              // Add other PDF-specific info here
             }
           };
 
+          console.log('PDF metadata extracted successfully:', metadata);
           resolve(metadata);
-        } catch (error) {
-          console.warn('Error parsing PDF with pdf.js-extract', error);
-          const metadata: ExtractedMetadata = {
+        } catch (pdfError) {
+          console.warn('Error parsing PDF, falling back to basic metadata', pdfError);
+          const basicMetadata: ExtractedMetadata = {
             creationDate: new Date(file.lastModified),
             modificationDate: new Date(file.lastModified),
             fileType: 'PDF Document',
             fileSize: formatFileSize(file.size),
           };
-          resolve(metadata);
+          resolve(basicMetadata);
         }
       } catch (error) {
-        console.error('Error reading PDF file', error);
-        const metadata: ExtractedMetadata = {
+        console.error('General error in PDF metadata extraction', error);
+        const fallbackMetadata: ExtractedMetadata = {
           creationDate: new Date(file.lastModified),
           modificationDate: new Date(file.lastModified),
           fileType: 'PDF Document',
           fileSize: formatFileSize(file.size),
         };
-        resolve(metadata);
+        resolve(fallbackMetadata);
       }
     };
 
-    reader.onerror = function() {
+    reader.onerror = function(error) {
+      console.error('FileReader error:', error);
       reject(new Error('Failed to read file'));
     };
 
@@ -265,13 +234,27 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
 };
 
 export const extractMetadata = async (file: File): Promise<ExtractedMetadata> => {
-  console.log('Extracting metadata for file:', file);
+  console.log('Starting metadata extraction for file:', file.name, file.type, file.size);
 
-  if (file.type.startsWith('image/')) {
-    return extractImageMetadata(file);
-  } else if (file.type === 'application/pdf') {
-    return extractPdfMetadata(file);
-  } else {
+  try {
+    if (file.type.startsWith('image/')) {
+      console.log('Processing as image file');
+      return await extractImageMetadata(file);
+    } else if (file.type === 'application/pdf') {
+      console.log('Processing as PDF file');
+      return await extractPdfMetadata(file);
+    } else {
+      console.log('Unknown file type, using basic metadata');
+      return {
+        creationDate: new Date(file.lastModified),
+        modificationDate: new Date(file.lastModified),
+        fileType: file.type || 'Unknown',
+        fileSize: formatFileSize(file.size),
+      };
+    }
+  } catch (error) {
+    console.error('Error in extractMetadata:', error);
+    // Fallback to very basic metadata
     return {
       creationDate: new Date(file.lastModified),
       modificationDate: new Date(file.lastModified),

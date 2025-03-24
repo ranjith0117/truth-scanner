@@ -1,267 +1,148 @@
-
-import { extractMetadata } from './metadataExtractor';
-
 export interface ScanResult {
+  status: string;
   authenticity: number;
-  status: 'Secure' | 'Suspicious' | 'Forged';
-  metadata: {
-    fileName: string;
-    fileType: string;
-    fileSize: string;
+  issues: { type: string; description: string; location?: string }[];
+  metadata?: {
     dateCreated: string;
     dateModified: string;
+    fileType: string;
+    fileSize: string;
+    dimensions?: string;
+    software?: string;
   };
-  issues: {
-    type: 'Warning' | 'Critical' | 'Info';
-    description: string;
-    location?: string;
-  }[];
-  manipulationAreas?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    type: 'Clone' | 'Edited' | 'Added' | 'Removed';
-    confidence: number;
-  }[];
 }
 
-interface Issue {
-  type: 'Warning' | 'Critical' | 'Info';
-  description: string;
-  location?: string;
-}
-
-export const generateMockScanResult = (isForged: boolean = false, fileLastModified?: number): ScanResult => {
-  const authenticity = isForged 
-    ? Math.random() * 40 + 10
-    : Math.random() * 5 + 95;
-
-  const status = authenticity > 90 
-    ? 'Secure' 
-    : authenticity > 50 
-      ? 'Suspicious' 
-      : 'Forged';
-
-  const now = new Date();
-  
-  let created, modified;
-  
-  if (fileLastModified) {
-    const fileModDate = new Date(fileLastModified);
-    
-    if (isForged) {
-      created = new Date(fileModDate.getTime() - (1000 * 60 * 60 * 24 * Math.random() * 30));
-      modified = fileModDate;
-    } else {
-      created = fileModDate;
-      modified = fileModDate;
-    }
-  } else {
-    if (isForged) {
-      created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 365);
-      modified = new Date(created.getTime() + (1000 * 60 * 60 * 24) + Math.random() * 1000 * 60 * 60 * 24 * 29);
-    } else {
-      created = new Date(now.getTime() - Math.random() * 1000 * 60 * 60 * 24 * 30);
-      modified = Math.random() > 0.5 
-        ? new Date(created.getTime())
-        : new Date(created.getTime() + Math.random() * 1000 * 60 * 5);
-    }
-  }
-
-  const issues = [];
-  
-  if (isForged) {
-    issues.push({
-      type: 'Critical',
-      description: 'Pixel inconsistencies detected in image',
-      location: 'Bottom right quadrant'
-    });
-    
-    if (modified.getTime() - created.getTime() > 1000 * 60 * 60 * 12) {
-      issues.push({
-        type: 'Warning',
-        description: 'Metadata timestamp anomalies: modified date significantly later than creation date',
-        location: 'File properties'
-      });
-    }
-    
-    issues.push({
-      type: 'Critical',
-      description: 'Unnatural pixel transitions detected at edit boundaries',
-      location: 'Multiple areas of image'
-    });
-    
-    if (Math.random() > 0.3) {
-      issues.push({
-        type: 'Critical',
-        description: 'Digital signature mismatch detected',
-        location: 'Document metadata'
-      });
-    }
-    
-    if (Math.random() > 0.5) {
-      issues.push({
-        type: 'Critical',
-        description: 'Basic editing software artifacts detected (MS Paint-like patterns)',
-        location: 'Throughout image'
-      });
-    }
-  } else if (Math.random() > 0.9) {
-    issues.push({
-      type: 'Info',
-      description: 'Compression artifacts present but consistent with file format',
-      location: 'Throughout image'
-    });
-  }
-
-  const manipulationTypes: ('Clone' | 'Edited' | 'Added' | 'Removed')[] = ['Clone', 'Edited', 'Added', 'Removed'];
-  
-  const manipulationAreas = isForged ? [
-    {
-      x: Math.random() * 70 + 10,
-      y: Math.random() * 70 + 10,
-      width: Math.random() * 20 + 10,
-      height: Math.random() * 20 + 10,
-      type: manipulationTypes[Math.floor(Math.random() * manipulationTypes.length)],
-      confidence: Math.random() * 10 + 90
-    },
-    {
-      x: Math.random() * 70 + 10,
-      y: Math.random() * 70 + 10,
-      width: Math.random() * 15 + 5,
-      height: Math.random() * 15 + 5,
-      type: 'Edited' as const,
-      confidence: Math.random() * 5 + 95
-    }
-  ] : undefined;
-  
-  if (isForged && Math.random() > 0.3) {
-    const randomType = manipulationTypes[Math.floor(Math.random() * manipulationTypes.length)];
-    manipulationAreas?.push({
-      x: Math.random() * 70 + 10,
-      y: Math.random() * 70 + 10,
-      width: Math.random() * 20 + 10,
-      height: Math.random() * 20 + 10,
-      type: randomType,
-      confidence: Math.random() * 10 + 90
-    });
-  }
-
-  return {
-    authenticity: Math.round(authenticity * 10) / 10,
-    status,
-    metadata: {
-      fileName: 'document.jpg',
-      fileType: 'JPEG Image',
-      fileSize: `${Math.floor(Math.random() * 10) + 1}.${Math.floor(Math.random() * 100)}MB`,
-      dateCreated: created.toISOString(),
-      dateModified: modified.toISOString()
-    },
-    issues,
-    manipulationAreas
-  };
+const mockIssues = {
+  Critical: [
+    "Inconsistencies detected in file metadata",
+    "Evidence of digital alteration found",
+    "File structure anomalies indicate potential tampering",
+    "Critical security risks detected",
+    "Suspected forgery: signature mismatch"
+  ],
+  Warning: [
+    "Minor discrepancies in file timestamps",
+    "Presence of unusual metadata entries",
+    "Slight variations from original file format",
+    "Potential data loss or corruption",
+    "Unverified digital signature"
+  ],
+  Info: [
+    "File contains standard metadata",
+    "No immediate security threats detected",
+    "Document adheres to common formatting standards",
+    "Metadata is consistent with file type",
+    "Digital signature is present but not verified"
+  ]
 };
+
+const mockLocations = [
+  "Header Section",
+  "Footer Section",
+  "Metadata Block",
+  "Image Pixels",
+  "Embedded Objects"
+];
+
+const mockSoftware = [
+  "Adobe Photoshop",
+  "GIMP",
+  "ImageMagick",
+  "Microsoft Word",
+  "LibreOffice Writer"
+];
+
+function getRandomIssue(type: string): string {
+  const issueList = mockIssues[type as keyof typeof mockIssues];
+  return issueList[Math.floor(Math.random() * issueList.length)];
+}
+
+function getRandomLocation(): string | undefined {
+  return mockLocations[Math.floor(Math.random() * mockLocations.length)];
+}
+
+function getRandomSoftware(): string {
+  return mockSoftware[Math.floor(Math.random() * mockSoftware.length)];
+}
 
 export const simulateScan = async (file: File): Promise<ScanResult> => {
-  console.log(`Starting scan simulation for file: ${file.name}`);
+  // Simulate a scan with a delay
+  await new Promise(resolve => setTimeout(resolve, 2500));
   
-  const metadata = await extractMetadata(file);
-  console.log('Extracted metadata:', metadata);
+  console.log("Simulating scan for file:", file.name);
   
-  const authenticity = Math.floor(Math.random() * 100);
-  
-  let status: 'Secure' | 'Suspicious' | 'Forged';
-  if (authenticity >= 90) {
-    status = 'Secure';
-  } else if (authenticity >= 60) {
-    status = 'Suspicious';
-  } else {
-    status = 'Forged';
-  }
-  
-  const issues: Issue[] = [];
-  
-  if (authenticity < 60) {
-    issues.push({
-      type: 'Critical',
-      description: 'Significant metadata inconsistencies detected. This file appears to have been manipulated.',
-      location: 'File metadata'
-    });
+  try {
+    // Generate a random authenticity score
+    const randomScore = Math.floor(Math.random() * 100) + 1;
     
-    const potentialIssues = [
-      {
-        type: 'Critical' as const,
-        description: 'Digital signature verification failed. The file has been modified after signing.',
-        location: 'Digital signature'
-      },
-      {
-        type: 'Critical' as const,
-        description: 'Pixel manipulation detected in multiple regions. Evidence of digital alteration.',
-        location: 'Image content'
-      },
-      {
-        type: 'Warning' as const,
-        description: 'Inconsistent compression patterns detected. Possible sign of splicing or content replacement.',
-        location: 'Image data'
-      }
-    ];
-    
-    const numIssues = Math.floor(Math.random() * 3) + 1;
-    for (let i = 0; i < numIssues; i++) {
-      const issueIndex = Math.floor(Math.random() * potentialIssues.length);
-      issues.push(potentialIssues[issueIndex]);
-      potentialIssues.splice(issueIndex, 1);
-      if (potentialIssues.length === 0) break;
+    // Determine status based on score
+    let status = 'Secure';
+    if (randomScore < 60) {
+      status = 'Forged';
+    } else if (randomScore < 90) {
+      status = 'Suspicious';
     }
-  } else if (authenticity < 90) {
-    issues.push({
-      type: 'Warning',
-      description: 'Minor inconsistencies detected in file metadata. The file may have been edited.',
-      location: 'File metadata'
-    });
     
-    const potentialIssues = [
-      {
-        type: 'Warning' as const,
-        description: 'Software artifacts detected. This document was processed with editing software.',
-        location: 'Document properties'
-      },
-      {
-        type: 'Warning' as const,
-        description: 'Timestamp anomalies detected. Creation and modification dates show unusual patterns.',
-        location: 'Metadata'
-      },
-      {
-        type: 'Info' as const,
-        description: 'File saved with different software than it was created with. May indicate editing.',
-        location: 'Software information'
+    // Generate random issues based on the score
+    const issues = [];
+    
+    if (randomScore < 90) {
+      const issueCount = Math.floor((100 - randomScore) / 20) + 1;
+      
+      for (let i = 0; i < issueCount; i++) {
+        const issueType = randomScore < 60 ? 'Critical' : 'Warning';
+        
+        // Add a random issue
+        issues.push({
+          type: issueType,
+          description: getRandomIssue(issueType),
+          location: getRandomLocation()
+        });
       }
-    ];
-    
-    const numIssues = Math.floor(Math.random() * 2) + 1;
-    for (let i = 0; i < numIssues; i++) {
-      const issueIndex = Math.floor(Math.random() * potentialIssues.length);
-      issues.push(potentialIssues[issueIndex]);
-      potentialIssues.splice(issueIndex, 1);
-      if (potentialIssues.length === 0) break;
     }
+    
+    // Create a mock metadata object
+    const metadata = {
+      dateCreated: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+      dateModified: new Date(Date.now() - Math.random() * 5000000000).toISOString(),
+      fileType: file.type.includes('pdf') ? 'PDF Document' : 'Image',
+      fileSize: formatFileSize(file.size),
+      dimensions: file.type.includes('image') ? `${Math.round(Math.random() * 1000 + 1000)}x${Math.round(Math.random() * 1000 + 1000)}` : undefined,
+      software: getRandomSoftware()
+    };
+    
+    // Return the mock scan result
+    return {
+      status,
+      authenticity: randomScore,
+      issues,
+      metadata
+    };
+  } catch (error) {
+    console.error("Error simulating scan:", error);
+    // Return a fallback result in case of error
+    return {
+      status: 'Suspicious',
+      authenticity: 75,
+      issues: [{
+        type: 'Warning',
+        description: 'Unable to fully analyze file. Some verification features limited.',
+        location: 'General'
+      }],
+      metadata: {
+        dateCreated: new Date().toISOString(),
+        dateModified: new Date().toISOString(),
+        fileType: file.type || 'Unknown',
+        fileSize: formatFileSize(file.size)
+      }
+    };
   }
-  
-  const formattedMetadata = {
-    fileName: file.name,
-    fileType: metadata.fileType,
-    fileSize: metadata.fileSize,
-    dateCreated: metadata.creationDate?.toISOString() || new Date().toISOString(),
-    dateModified: metadata.modificationDate?.toISOString() || new Date().toISOString(),
-  };
-  
-  await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1500));
-  
-  return {
-    status,
-    authenticity,
-    metadata: formattedMetadata,
-    issues
-  };
 };
+
+// Helper function to format file size
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  else if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  else return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+}
