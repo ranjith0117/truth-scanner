@@ -52,7 +52,7 @@
   }
 
   html, body {
-    @apply bg-truthscan-black text-foreground antialiased min-h-screen;
+    @apply bg-truthscan-black text-foreground antialiased min-h-screen font-sans;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
   }
 
@@ -68,6 +68,26 @@
   #root {
     min-height: 100vh;
     width: 100%;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl leading-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl font-bold;
+  }
+
+  p {
+    @apply leading-relaxed;
   }
 }
 
@@ -110,6 +130,42 @@
     background-size: 100% 200%;
     animation: scanning 2s linear infinite;
     pointer-events: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .heading-xl {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight;
+  }
+
+  .heading-lg {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+
+  .heading-md {
+    @apply text-2xl md:text-3xl font-bold tracking-tight;
+  }
+
+  .heading-sm {
+    @apply text-xl md:text-2xl font-bold tracking-tight;
+  }
+
+  .body-lg {
+    @apply text-lg leading-relaxed;
+  }
+
+  .body-md {
+    @apply text-base leading-relaxed;
+  }
+
+  .body-sm {
+    @apply text-sm leading-relaxed;
+  }
+
+  .caption {
+    @apply text-xs leading-normal text-white/70;
   }
 }
 

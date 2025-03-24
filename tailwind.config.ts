@@ -20,6 +20,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", ...fontFamily.sans],
+        heading: ["Inter", ...fontFamily.sans],
+      },
       colors: {
         truthscan: {
           blue: "#3B82F6", // Primary blue color
@@ -79,9 +83,6 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      fontFamily: {
-        sans: ["Inter var", ...fontFamily.sans],
       },
       backgroundImage: {
         'grid-pattern': "linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)",
