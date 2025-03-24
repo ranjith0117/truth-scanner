@@ -51,8 +51,8 @@
     @apply border-border selection:bg-truthscan-blue/20 selection:text-white;
   }
 
-  body {
-    @apply bg-truthscan-black text-foreground antialiased;
+  html, body {
+    @apply bg-truthscan-black text-foreground antialiased min-h-screen;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
   }
 
@@ -98,5 +98,14 @@
     background-size: 100% 200%;
     animation: scanning 2s linear infinite;
     pointer-events: none;
+  }
+}
+
+@keyframes scanning {
+  0% {
+    background-position: 0 -100%;
+  }
+  100% {
+    background-position: 0 100%;
   }
 }
