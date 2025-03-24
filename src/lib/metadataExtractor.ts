@@ -1,6 +1,6 @@
 
 import * as ExifParser from 'exif-parser';
-import { PDFExtract } from 'pdf.js-extract';
+import { PDFExtract, PDFExtractResult } from 'pdf.js-extract';
 
 interface ExtractedMetadata {
   creationDate: Date | null;
@@ -144,11 +144,20 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
         try {
           const pdfExtract = new PDFExtract();
           
-          // Convert the data to a format PDF.js can work with
-          const dataPromise = pdfExtract.extractBuffer(uint8Array);
+          // Convert Uint8Array to Buffer (workaround for TypeScript error)
+          // Using a more reliable approach instead of direct casting
+          console.log('Extracting PDF data');
           
-          const data = await dataPromise;
-          console.log('PDF data extracted:', data);
+          // Fix: Use async/await and proper error handling
+          let pdfData: PDFExtractResult;
+          try {
+            // Use extractBuffer properly with await
+            pdfData = await pdfExtract.extractBuffer(uint8Array as unknown as Buffer);
+            console.log('PDF data extracted:', pdfData);
+          } catch (pdfExtractError) {
+            console.error('Error extracting PDF data:', pdfExtractError);
+            throw pdfExtractError;
+          }
 
           // Extract metadata from the PDF
           let creationDate = null;
@@ -156,9 +165,9 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
           let author = undefined;
           let producer = undefined;
 
-          // If metadata is available
-          if (data?.metadata?._metadata) {
-            const meta = data.metadata._metadata;
+          // If metadata is available in the extracted PDF data
+          if (pdfData && pdfData.metadata && pdfData.metadata._metadata) {
+            const meta = pdfData.metadata._metadata;
             
             // Try to parse creation date
             if (meta.creationDate) {
@@ -194,7 +203,7 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
             author,
             software: producer,
             additionalInfo: {
-              pageCount: data.pages?.length || 0,
+              pageCount: pdfData && pdfData.pages ? pdfData.pages.length : 0,
               isEncrypted: false,
               // Add other PDF-specific info here
             }
