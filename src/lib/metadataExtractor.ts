@@ -1,4 +1,3 @@
-
 import * as ExifParser from 'exif-parser';
 import { PDFExtract, PDFExtractResult } from 'pdf.js-extract';
 
@@ -19,7 +18,6 @@ interface ExtractedMetadata {
   additionalInfo?: Record<string, any>;
 }
 
-// Simple file size formatter
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return bytes + ' B';
   else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -96,7 +94,6 @@ export const extractImageMetadata = async (file: File): Promise<ExtractedMetadat
           resolve(metadata);
         } catch (exifError) {
           console.warn('Error parsing EXIF data, falling back to basic metadata', exifError);
-          // Fallback to basic file metadata
           const basicMetadata: ExtractedMetadata = {
             creationDate: new Date(file.lastModified),
             modificationDate: new Date(file.lastModified),
@@ -126,6 +123,18 @@ export const extractImageMetadata = async (file: File): Promise<ExtractedMetadat
   });
 };
 
+interface EnhancedPDFExtractResult extends PDFExtractResult {
+  metadata?: {
+    _metadata?: {
+      creationDate?: string;
+      modDate?: string;
+      author?: string;
+      producer?: string;
+      [key: string]: any;
+    };
+  };
+}
+
 export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata> => {
   return new Promise((resolve, reject) => {
     console.log('Starting PDF metadata extraction');
@@ -144,32 +153,25 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
         try {
           const pdfExtract = new PDFExtract();
           
-          // Convert Uint8Array to Buffer (workaround for TypeScript error)
-          // Using a more reliable approach instead of direct casting
           console.log('Extracting PDF data');
           
-          // Fix: Use async/await and proper error handling
-          let pdfData: PDFExtractResult;
+          let pdfData: EnhancedPDFExtractResult;
           try {
-            // Use extractBuffer properly with await
-            pdfData = await pdfExtract.extractBuffer(uint8Array as unknown as Buffer);
+            pdfData = await pdfExtract.extractBuffer(uint8Array as unknown as Buffer) as EnhancedPDFExtractResult;
             console.log('PDF data extracted:', pdfData);
           } catch (pdfExtractError) {
             console.error('Error extracting PDF data:', pdfExtractError);
             throw pdfExtractError;
           }
 
-          // Extract metadata from the PDF
           let creationDate = null;
           let modificationDate = null;
           let author = undefined;
           let producer = undefined;
 
-          // If metadata is available in the extracted PDF data
           if (pdfData && pdfData.metadata && pdfData.metadata._metadata) {
             const meta = pdfData.metadata._metadata;
             
-            // Try to parse creation date
             if (meta.creationDate) {
               try {
                 creationDate = new Date(meta.creationDate);
@@ -178,7 +180,6 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
               }
             }
             
-            // Try to parse modification date
             if (meta.modDate) {
               try {
                 modificationDate = new Date(meta.modDate);
@@ -191,7 +192,6 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
             producer = meta.producer;
           }
 
-          // Fallback to file system dates if needed
           if (!creationDate) creationDate = new Date(file.lastModified);
           if (!modificationDate) modificationDate = new Date(file.lastModified);
 
@@ -205,7 +205,6 @@ export const extractPdfMetadata = async (file: File): Promise<ExtractedMetadata>
             additionalInfo: {
               pageCount: pdfData && pdfData.pages ? pdfData.pages.length : 0,
               isEncrypted: false,
-              // Add other PDF-specific info here
             }
           };
 
@@ -263,7 +262,6 @@ export const extractMetadata = async (file: File): Promise<ExtractedMetadata> =>
     }
   } catch (error) {
     console.error('Error in extractMetadata:', error);
-    // Fallback to very basic metadata
     return {
       creationDate: new Date(file.lastModified),
       modificationDate: new Date(file.lastModified),
