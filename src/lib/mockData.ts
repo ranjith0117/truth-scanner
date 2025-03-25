@@ -1,3 +1,4 @@
+
 import { extractMetadata } from './metadataExtractor';
 
 export interface ScanResult {
