@@ -151,7 +151,7 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
 
   if (isLoading && file) {
     return (
-      <div className="glass-card p-8 rounded-2xl min-h-[300px] w-full flex flex-col items-center justify-center space-y-6">
+      <div className="bg-black/30 border border-white/10 p-8 rounded-xl min-h-[300px] w-full flex flex-col items-center justify-center space-y-6">
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-truthscan-blue animate-spin mx-auto mb-5" />
           <h3 className="text-white font-medium mb-1">Analyzing {file.name}</h3>
@@ -160,7 +160,7 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
           </p>
         </div>
         
-        <div className="w-full max-w-md bg-truthscan-gray/40 rounded-full h-2.5 overflow-hidden">
+        <div className="w-full max-w-md bg-black/40 rounded-full h-2.5 overflow-hidden">
           <div 
             className="bg-truthscan-blue h-2.5 rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
@@ -179,7 +179,7 @@ const UploadArea = ({ onScanComplete }: UploadAreaProps) => {
 
   return (
     <div
-      className={`glass-card p-8 rounded-2xl min-h-[300px] w-full transition-all duration-300 ${
+      className={`bg-black/30 border border-white/10 p-8 rounded-xl min-h-[300px] w-full transition-all duration-300 ${
         isDragging ? 'border-truthscan-blue bg-truthscan-blue/5' : ''
       }`}
       onDragEnter={handleDragEnter}

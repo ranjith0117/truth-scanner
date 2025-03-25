@@ -5,7 +5,7 @@ import UploadArea from '@/components/UploadArea';
 
 const Scanner = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col grid-bg">
       <Navbar />
 
       <main className="flex-grow pt-32 pb-20">
@@ -20,7 +20,7 @@ const Scanner = () => {
 
             <UploadArea />
 
-            <div className="mt-12 bg-truthscan-gray/10 border border-white/5 rounded-xl p-6">
+            <div className="mt-12 bg-black/20 border border-white/10 rounded-xl p-6">
               <h3 className="text-white font-medium mb-3">Accepted File Formats</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

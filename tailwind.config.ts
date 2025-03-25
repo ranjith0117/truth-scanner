@@ -85,7 +85,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       backgroundImage: {
-        'grid-pattern': "linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)",
+        'grid-pattern': "linear-gradient(to right, rgba(40, 40, 70, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(40, 40, 70, 0.1) 1px, transparent 1px)",
       },
       keyframes: {
         "accordion-down": {

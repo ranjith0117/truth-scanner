@@ -80,7 +80,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-16 left-0 right-0 bg-truthscan-black/95 backdrop-blur-lg shadow-lg animate-slide-down">
+        <div className="md:hidden absolute top-16 left-0 right-0 bg-truthscan-black/95 backdrop-blur-lg shadow-lg">
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
             <Link 
               to="/" 

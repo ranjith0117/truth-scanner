@@ -18,10 +18,10 @@ const FeatureCard = ({
 }: FeatureCardProps) => {
   return (
     <div 
-      className={`glass-card p-6 rounded-2xl transition-all duration-300 hover:border-truthscan-blue/30 ${className}`}
+      className={`bg-black/30 border border-white/10 p-6 rounded-xl transition-all duration-300 hover:border-truthscan-blue/30 ${className}`}
     >
-      <div className="bg-truthscan-gray/50 p-3 rounded-lg w-fit mb-5">
-        <Icon className="w-6 h-6 text-truthscan-blue" />
+      <div className="text-truthscan-blue mb-5">
+        <Icon className="w-6 h-6" />
       </div>
       <h3 className="text-lg font-medium text-white mb-3">{title}</h3>
       <p className="text-white/70 mb-4">{description}</p>

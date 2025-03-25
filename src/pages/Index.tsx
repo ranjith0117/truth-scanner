@@ -8,15 +8,15 @@ import ScanProcess from '@/components/ScanProcess';
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col grid-bg">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 relative grid-bg">
-        <div className="absolute inset-0 bg-gradient-to-b from-truthscan-blue/10 to-transparent"></div>
+      <section className="pt-32 pb-20 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-truthscan-blue/5 to-transparent"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-8">
+            <div className="inline-flex items-center bg-black/30 border border-white/10 rounded-full px-4 py-1.5 mb-8">
               <Shield className="w-4 h-4 text-truthscan-blue mr-2" />
               <span className="text-sm text-white/90">Powered by advanced AI detection</span>
             </div>
@@ -38,7 +38,7 @@ const Index = () => {
               </Link>
               <Link
                 to="/about"
-                className="px-8 py-3 bg-truthscan-dark-gray rounded-lg text-white font-medium text-sm hover:bg-truthscan-gray/90 transition-colors"
+                className="px-8 py-3 bg-black/40 border border-white/10 rounded-lg text-white font-medium text-sm hover:bg-black/50 transition-colors"
               >
                 Learn More
               </Link>
@@ -48,7 +48,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-truthscan-dark-gray relative">
+      <section className="py-20 bg-black/20 relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">Advanced Detection Capabilities</h2>
@@ -83,7 +83,7 @@ const Index = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 bg-truthscan-black">
+      <section className="py-20 bg-truthscan-black grid-bg">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-4">How TruthScan Works</h2>
@@ -121,7 +121,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-truthscan-dark-gray">
+      <section className="py-20 bg-black/20">
         <div className="container mx-auto px-4">
           <div className="glass-card rounded-3xl p-12 text-center max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-white mb-4">Ready to authenticate with confidence?</h2>
