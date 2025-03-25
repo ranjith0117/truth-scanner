@@ -12,6 +12,8 @@ export interface ScanResult {
   lastModified: number;
   anomalies: Anomaly[];
   timestamp: number;
+  status: 'Secure' | 'Suspicious' | 'Forged'; // Add status property
+  issues: Issue[]; // Add issues property
 }
 
 export interface Manipulation {
@@ -26,6 +28,13 @@ export interface Anomaly {
   type: string;
   description: string;
   confidence: number;
+}
+
+// Add new Issue interface for the issues property
+export interface Issue {
+  type: 'Critical' | 'Warning' | 'Info';
+  description: string;
+  location?: string;
 }
 
 // Simulated scan function that returns results after a delay
@@ -53,10 +62,21 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     // Lower score for non-authentic files (30-84)
     authenticityScore = Math.floor(Math.random() * 55) + 30;
   }
+
+  // Determine status based on authenticity score
+  let status: 'Secure' | 'Suspicious' | 'Forged';
+  if (authenticityScore >= 85) {
+    status = 'Secure';
+  } else if (authenticityScore >= 60) {
+    status = 'Suspicious';
+  } else {
+    status = 'Forged';
+  }
   
   // Generate manipulations based on authenticity score
   const manipulations: Manipulation[] = [];
   const anomalies: Anomaly[] = [];
+  const issues: Issue[] = [];
   
   if (authenticityScore < 85) {
     // Add some manipulations for non-authentic files
@@ -82,6 +102,18 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
           description: 'Lighting inconsistencies detected across the image',
           confidence: Math.random() * 20 + 75, // 75-95% confidence
         });
+
+        // Add corresponding issues
+        issues.push({
+          type: 'Critical',
+          description: 'Significant pixel alterations detected in multiple areas',
+          location: 'Throughout image'
+        });
+
+        issues.push({
+          type: 'Critical',
+          description: 'AI generation artifacts detected',
+        });
       } else {
         manipulations.push({
           type: 'clone_stamp',
@@ -94,6 +126,18 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
           type: 'metadata_mismatch',
           description: 'Image metadata does not match content characteristics',
           confidence: Math.random() * 25 + 65, // 65-90% confidence
+        });
+
+        // Add corresponding issues
+        issues.push({
+          type: 'Warning',
+          description: 'Possible clone stamp tool usage detected',
+          location: 'Lower right quadrant'
+        });
+
+        issues.push({
+          type: 'Warning',
+          description: 'Image metadata does not match content characteristics',
         });
       }
     } else if (isPDF) {
@@ -118,6 +162,19 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
           description: 'Font inconsistencies detected throughout document',
           confidence: Math.random() * 15 + 80, // 80-95% confidence
         });
+
+        // Add corresponding issues
+        issues.push({
+          type: 'Critical',
+          description: 'Text has been modified or replaced',
+          location: 'Page 2, paragraph 3'
+        });
+
+        issues.push({
+          type: 'Critical',
+          description: 'Possible signature forgery detected',
+          location: 'Last page'
+        });
       } else {
         manipulations.push({
           type: 'page_manipulation',
@@ -131,6 +188,18 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
           description: 'Document metadata appears to have been modified',
           confidence: Math.random() * 20 + 70, // 70-90% confidence
         });
+
+        // Add corresponding issues
+        issues.push({
+          type: 'Warning',
+          description: 'Possible page content alteration',
+          location: 'Page 1'
+        });
+
+        issues.push({
+          type: 'Warning',
+          description: 'Document metadata appears to have been modified',
+        });
       }
     }
   } else {
@@ -143,12 +212,24 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
           description: 'Normal compression artifacts detected',
           confidence: Math.random() * 40 + 30, // 30-70% confidence
         });
+
+        // Add corresponding issue
+        issues.push({
+          type: 'Info',
+          description: 'Normal compression artifacts detected',
+        });
       } else if (isPDF) {
         manipulations.push({
           type: 'standard_editing',
           severity: 'low',
           description: 'Standard PDF editing patterns detected',
           confidence: Math.random() * 40 + 30, // 30-70% confidence
+        });
+
+        // Add corresponding issue
+        issues.push({
+          type: 'Info',
+          description: 'Standard PDF editing patterns detected',
         });
       }
     }
@@ -159,6 +240,10 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     fileFormat: type,
     fileSize: size,
     creationDate: new Date(lastModified).toISOString(),
+    // Add creation and modification dates
+    dateCreated: new Date(lastModified - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(), // Random date within last 30 days
+    dateModified: new Date(lastModified).toISOString(),
+    fileType: type
   };
   
   // Add image-specific metadata
@@ -187,6 +272,8 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     lastModified,
     anomalies,
     timestamp: Date.now(),
+    status,
+    issues,
   };
 };
 
@@ -211,10 +298,13 @@ export const exampleScanResult: ScanResult = {
     fileFormat: 'image/jpeg',
     fileSize: 2345678,
     creationDate: '2023-05-15T10:30:45.000Z',
+    dateCreated: '2023-05-10T08:45:21.000Z',
+    dateModified: '2023-05-15T10:30:45.000Z',
     dimensions: '1920x1080',
     colorSpace: 'RGB',
     bitDepth: 24,
     compressionType: 'JPEG',
+    fileType: 'image/jpeg'
   },
   fileName: 'suspect_image.jpg',
   fileType: 'image/jpeg',
@@ -233,4 +323,20 @@ export const exampleScanResult: ScanResult = {
     }
   ],
   timestamp: 1684144245000,
+  status: 'Forged',
+  issues: [
+    {
+      type: 'Critical',
+      description: 'Significant pixel alterations detected across multiple regions',
+      location: 'Throughout image'
+    },
+    {
+      type: 'Critical',
+      description: 'AI generation artifacts detected throughout image'
+    },
+    {
+      type: 'Warning',
+      description: 'Lighting angles inconsistent across the image'
+    }
+  ]
 };
