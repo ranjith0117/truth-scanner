@@ -1,4 +1,3 @@
-
 import { extractMetadata } from './metadataExtractor';
 
 export interface ScanResult {
@@ -108,10 +107,10 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     const metadata = {
       dateCreated: extractedMetadata.creationDate ? extractedMetadata.creationDate.toISOString() : new Date().toISOString(),
       dateModified: extractedMetadata.modificationDate ? extractedMetadata.modificationDate.toISOString() : new Date().toISOString(),
-      fileType: extractedMetadata.fileType,
-      fileSize: extractedMetadata.fileSize,
+      fileType: extractedMetadata.fileType || file.type,
+      fileSize: extractedMetadata.fileSize || formatFileSize(file.size),
       dimensions: extractedMetadata.dimensions ? `${extractedMetadata.dimensions.width}x${extractedMetadata.dimensions.height}` : undefined,
-      software: extractedMetadata.software
+      software: extractedMetadata.software || 'Unknown'
     };
     
     // Return the scan result with real metadata
