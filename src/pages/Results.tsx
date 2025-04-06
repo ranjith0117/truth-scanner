@@ -15,7 +15,8 @@ const Results = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadingTimer = setTimeout(() => {
+    try {
+      console.log("Attempting to load scan results...");
       const storedResult = sessionStorage.getItem('scanResult');
       const storedFileName = sessionStorage.getItem('fileName');
       const storedLastModified = sessionStorage.getItem('fileLastModified');
@@ -30,6 +31,7 @@ const Results = () => {
           duration: 5000,
         });
       } else {
+        console.log("Found stored result:", storedResult);
         try {
           const parsedResult = JSON.parse(storedResult) as ScanResult;
           setResult(parsedResult);
@@ -50,12 +52,13 @@ const Results = () => {
           });
         }
       }
-      
+    } catch (error) {
+      console.error("Error accessing session storage:", error);
+      setResult(exampleScanResult);
+    } finally {
       setIsLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(loadingTimer);
-  }, [navigate, toast]);
+    }
+  }, [toast]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

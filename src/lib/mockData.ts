@@ -12,9 +12,15 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     console.log('Scan complete with result:', result);
     
     // Store the result in sessionStorage for the Results page
-    sessionStorage.setItem('scanResult', JSON.stringify(result));
-    sessionStorage.setItem('fileName', file.name);
-    sessionStorage.setItem('fileLastModified', file.lastModified.toString());
+    try {
+      const resultString = JSON.stringify(result);
+      console.log('Storing scan result in sessionStorage:', resultString);
+      sessionStorage.setItem('scanResult', resultString);
+      sessionStorage.setItem('fileName', file.name);
+      sessionStorage.setItem('fileLastModified', file.lastModified.toString());
+    } catch (storageError) {
+      console.error('Error storing scan result in sessionStorage:', storageError);
+    }
     
     return result;
   } catch (error) {
@@ -38,9 +44,15 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     };
     
     // Store the fallback result in sessionStorage
-    sessionStorage.setItem('scanResult', JSON.stringify(fallbackResult));
-    sessionStorage.setItem('fileName', file.name);
-    sessionStorage.setItem('fileLastModified', file.lastModified.toString());
+    try {
+      const fallbackString = JSON.stringify(fallbackResult);
+      console.log('Storing fallback result in sessionStorage:', fallbackString);
+      sessionStorage.setItem('scanResult', fallbackString);
+      sessionStorage.setItem('fileName', file.name);
+      sessionStorage.setItem('fileLastModified', file.lastModified.toString());
+    } catch (storageError) {
+      console.error('Error storing fallback result in sessionStorage:', storageError);
+    }
     
     return fallbackResult;
   }
