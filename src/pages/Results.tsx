@@ -3,64 +3,59 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, AlertTriangle, Check, ChevronRight, Info, Download, File } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { ScanResult } from '@/lib/mockData';
+import { ScanResult, exampleScanResult } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 
 const Results = () => {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [fileName, setFileName] = useState<string>('document.jpg');
   const [fileLastModified, setFileLastModified] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Retrieve result from sessionStorage
-    const storedResult = sessionStorage.getItem('scanResult');
-    const storedFileName = sessionStorage.getItem('fileName');
-    const storedLastModified = sessionStorage.getItem('fileLastModified');
-    
-    if (!storedResult) {
-      // If no result in storage, redirect to scanner
-      navigate('/scanner');
-      return;
-    }
-    
-    try {
-      const parsedResult = JSON.parse(storedResult) as ScanResult;
-      setResult(parsedResult);
-      if (storedFileName) {
-        setFileName(storedFileName);
+    const loadingTimer = setTimeout(() => {
+      const storedResult = sessionStorage.getItem('scanResult');
+      const storedFileName = sessionStorage.getItem('fileName');
+      const storedLastModified = sessionStorage.getItem('fileLastModified');
+      
+      if (!storedResult) {
+        console.log('No scan result found in session storage, using example data');
+        setResult(exampleScanResult);
+        setFileName('example-document.jpg');
+        toast({
+          title: "Demo Mode",
+          description: "You're viewing sample scan results. Upload a document to see real results.",
+          duration: 5000,
+        });
+      } else {
+        try {
+          const parsedResult = JSON.parse(storedResult) as ScanResult;
+          setResult(parsedResult);
+          if (storedFileName) {
+            setFileName(storedFileName);
+          }
+          if (storedLastModified) {
+            setFileLastModified(parseInt(storedLastModified));
+          }
+        } catch (error) {
+          console.error("Error parsing stored result:", error);
+          setResult(exampleScanResult);
+          setFileName('example-document.jpg');
+          toast({
+            title: "Error",
+            description: "Failed to load scan results, showing example data instead",
+            variant: "destructive"
+          });
+        }
       }
-      if (storedLastModified) {
-        setFileLastModified(parseInt(storedLastModified));
-      }
-    } catch (error) {
-      console.error("Error parsing stored result:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load scan results",
-        variant: "destructive"
-      });
-      navigate('/scanner');
-    }
+      
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(loadingTimer);
   }, [navigate, toast]);
-
-  if (!result) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow pt-32 pb-20 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin-slow mb-6">
-              <Shield className="w-12 h-12 text-truthscan-blue mx-auto" />
-            </div>
-            <h2 className="text-xl text-white font-medium">Loading results...</h2>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -175,6 +170,46 @@ const Results = () => {
         return <Info className="w-5 h-5 text-white" />;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow pt-32 pb-20 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin-slow mb-6">
+              <Shield className="w-12 h-12 text-truthscan-blue mx-auto" />
+            </div>
+            <h2 className="text-xl text-white font-medium">Loading results...</h2>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!result) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow pt-32 pb-20 flex items-center justify-center">
+          <div className="text-center">
+            <AlertTriangle className="w-12 h-12 text-truthscan-yellow mx-auto mb-6" />
+            <h2 className="text-xl text-white font-medium mb-4">No scan results available</h2>
+            <p className="text-white/70 mb-8">Please upload a document to analyze it.</p>
+            <button 
+              className="px-5 py-2.5 bg-truthscan-blue text-white rounded-lg flex items-center gap-2 mx-auto hover:bg-truthscan-blue/90 transition-colors"
+              onClick={() => navigate('/scanner')}
+            >
+              <Shield className="w-4 h-4" />
+              <span>Go to Scanner</span>
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

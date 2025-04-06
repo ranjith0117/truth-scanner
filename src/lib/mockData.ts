@@ -1,3 +1,4 @@
+
 // Import the real scanning service
 import { ScanResult, scanDocument } from './scanService';
 
@@ -9,11 +10,17 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
     // Use the real scanning service
     const result = await scanDocument(file);
     console.log('Scan complete with result:', result);
+    
+    // Store the result in sessionStorage for the Results page
+    sessionStorage.setItem('scanResult', JSON.stringify(result));
+    sessionStorage.setItem('fileName', file.name);
+    sessionStorage.setItem('fileLastModified', file.lastModified.toString());
+    
     return result;
   } catch (error) {
     console.error('Error during document scanning:', error);
     // Return a fallback result in case of error
-    return {
+    const fallbackResult: ScanResult = {
       authenticity: 0,
       status: 'Suspicious',
       metadata: {
@@ -29,6 +36,13 @@ export const simulateScan = async (file: File): Promise<ScanResult> => {
         }
       ]
     };
+    
+    // Store the fallback result in sessionStorage
+    sessionStorage.setItem('scanResult', JSON.stringify(fallbackResult));
+    sessionStorage.setItem('fileName', file.name);
+    sessionStorage.setItem('fileLastModified', file.lastModified.toString());
+    
+    return fallbackResult;
   }
 };
 
